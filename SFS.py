@@ -1,26 +1,32 @@
 import pandas as pandas;
+import time;
 from sklearn.model_selection import cross_val_score;
 from sklearn import tree;
 from sklearn import preprocessing;
 import numpy as np;
+import matplotlib.pyplot as plt
 pandas.set_option('max_colwidth', 800)
 
-def evaluar_soluciones(datos, variables, objetivo, n_exp, cv):
- data_frame = pandas.DataFrame(data=datos)
- X = data_frame[variables]
- y = data_frame[objetivo]
- clf = tree.DecisionTreeClassifier()
 
- scores = cross_val_score(clf, X, y, cv=cv, scoring="balanced_accuracy")
+def evaluar_soluciones(datos, variables, objetivo, n_exp, cv, clf=tree.DecisionTreeClassifier(),
+                       scoring="balanced_accuracy"):
+    data_frame = pandas.DataFrame(data=datos)
+    X = data_frame[variables]
+    y = data_frame[objetivo]
 
- for i in range(n_exp - 1):
-  new_scores = cross_val_score(clf, X, y, cv=cv, scoring="balanced_accuracy")
-  scores = scores + new_scores
+    scores = np.mean(cross_val_score(clf, X, y, scoring=scoring, cv=cv, n_jobs=-1))
 
- scores = scores / n_exp
- return np.mean(scores)
+    for i in range(n_exp - 1):
+        new_scores = np.mean(cross_val_score(clf, X, y, scoring=scoring, cv=cv, n_jobs=-1))
+        scores = scores + new_scores
+
+    scores = scores / n_exp
+    return scores
+
 
 def SFS(datos, respuesta, d=0):
+    start = time.time()
+
     diccionario_resultado = {}
     soluciones_actual = []
     columnas = list(datos.columns)
@@ -53,5 +59,9 @@ def SFS(datos, respuesta, d=0):
         clave = ', '.join(soluciones_actual)
         diccionario_resultado[clave] = score_resultado
         k = k + 1
+
+    done = time.time()
+    elapsed = done - start
+    print("Tiempo empleado: ", elapsed)
 
     return diccionario_resultado
